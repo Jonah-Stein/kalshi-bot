@@ -1,0 +1,16 @@
+With itnrusive lists, pointers live right inside the data object. What this means is that there will be a doubly linked list, for example, and instead of each node of that list having to store data, instead it holds nothing and only the data object holds the pointer to the node.
+
+The data from these intrusive structures can still be accessed because the memory location of the data will be a fixed amound away from where the pointer lives.
+
+struct Player{
+    int size;
+    string name;
+
+    IntrusiveNode list_hook;
+}
+Since the intrusive node is defined in the object, when we know the memory address of the node, all of the rest of the object data is accessible by fixed size operations. (i.e. look 4 bytes up to see the name, 8 bytes for the size). This can be done by the compiler.
+
+In a doubly linked-list queue, you'd have a variable storing a pointer to the head, which would, of course, be a pointer to that node in memory. So, just through that you have access to that object.
+
+
+These intrusive nodes can be implemented by boost.intrusive and embedded template library are both good options for this

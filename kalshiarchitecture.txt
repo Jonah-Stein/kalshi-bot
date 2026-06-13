@@ -1,5 +1,0 @@
-Fixed 99-length array for each price level. Each points to an integer indicating the number of contracts at that price(which will be 100x more than the actual number of contracts). This is to keep integer operations, which are faster.
-
-Pointer at highest yes bid price and lowest no bid(yes ask) price.
-
-these operations should all be pretty quick then

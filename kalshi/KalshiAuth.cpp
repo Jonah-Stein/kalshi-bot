@@ -1,4 +1,4 @@
-#include "KalshiClient.hpp"
+#include "KalshiAuth.hpp"
 
 #include <iostream>
 #include <vector>
@@ -12,37 +12,37 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <stdexcept>
-#include <cpr/cpr.h>
 #include <chrono>
-#include <simdjson.h>
+#include <cpr/cpr.h>
 
 
-KalshiClient::KalshiClient(const std::string& pem, const std::string& api_key, const std::string& base_api_url){
+KalshiAuth::KalshiAuth(const std::string& pem, const std::string& api_key, const std::string& base_api_url){
     api_access_token_ = api_key;
     base_api_url_ = base_api_url;
     private_key_ = loadPrivateKeyFromPem(pem);
 }
 
-KalshiClient::~KalshiClient() {
+KalshiAuth::~KalshiAuth() {
     EVP_PKEY_free(private_key_);
 }
 
-void KalshiClient::printSeriesInfo(const std::string& series_ticker){
-    std::string req_path = std::format("/trade-api/v2/series/{}", series_ticker);
-    cpr::Response res = getRequest(req_path);
-    std::cout<<res.text << "\n";
-}
 
-
-std::string KalshiClient::createAccessSignature(int64_t timestamp, const std::string& http_method, const std::string& req_path){
-    std::string message_string = std::format("{}{}{}", timestamp, http_method, req_path);
+cpr::Header KalshiAuth::createHeader(const std::string& http_method, const std::string& req_path){
+    int64_t ts = timestampMs();
+    std::string message_string = std::format("{}{}{}", ts, http_method, req_path);
     //sign
     std::vector<unsigned char> signed_message = signRsaPssSha256(message_string);
     //encode
-    return base64Encode(signed_message.data(), signed_message.size());
+    std::string access_signature = base64Encode(signed_message.data(), signed_message.size());
+
+    return cpr::Header{
+        {"KALSHI-ACCESS-KEY", api_access_token_},
+        {"KALSHI-ACCESS-TIMESTAMP", std::to_string(ts)},
+        {"KALSHI-ACCESS-SIGNATURE", access_signature}
+    }
 }
 
-EVP_PKEY* KalshiClient::loadPrivateKeyFromPem(const std::string& pem) {
+EVP_PKEY* KalshiAuth::loadPrivateKeyFromPem(const std::string& pem) {
     BIO* bio = BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size()));
     if (!bio) throw std::runtime_error("BIO_new_mem_buf failed");
 
@@ -53,7 +53,7 @@ EVP_PKEY* KalshiClient::loadPrivateKeyFromPem(const std::string& pem) {
     return pkey;
 }
 
-std::vector<unsigned char> KalshiClient::signRsaPssSha256(const std::string& message){
+std::vector<unsigned char> KalshiAuth::signRsaPssSha256(const std::string& message){
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
     if (!ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
 
@@ -102,7 +102,7 @@ std::vector<unsigned char> KalshiClient::signRsaPssSha256(const std::string& mes
     return signature;
 }
 
-std::string KalshiClient::base64Encode(const unsigned char* data, size_t len) {
+std::string KalshiAuth::base64Encode(const unsigned char* data, size_t len) {
     BIO* b64 = BIO_new(BIO_f_base64());
     BIO* mem = BIO_new(BIO_s_mem());
     b64 = BIO_push(b64, mem);
@@ -119,35 +119,7 @@ std::string KalshiClient::base64Encode(const unsigned char* data, size_t len) {
     return out;
 }
 
-int64_t KalshiClient::timestampMs() {
+int64_t KalshiAuth::timestampMs() {
     using namespace std::chrono;
     return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-}
-
-// create a get request -- going to return a generic json
-cpr::Response KalshiClient::getRequest(const std::string& path){
-    int64_t ts = timestampMs();
-    std::string access_signature = createAccessSignature(ts, "GET", path);
-
-    return cpr::Get(
-        cpr::Url{std::format("{}{}", base_api_url_, path)},
-        cpr::Header{
-            {"KALSHI-ACCESS-KEY", api_access_token_},
-            {"KALSHI-ACCESS-TIMESTAMP", std::to_string(ts)},
-            {"KALSHI-ACCESS-SIGNATURE", access_signature}
-        }
-    );
-}
-
-// DOM is a document object model - in this case, an in-memory representation of the json
-// document once its been parsed
-simdjson::dom::element KalshiClient::parseResponse(const cpr::Response& resp){
-    simdjson::dom::element doc;
-    auto err = json_parser_.parse(resp.text).get(doc);
-    if (err) {
-        throw std::runtime_error(
-            std::format("JSON parse error: {}", simdjson::error_message(err))
-        );
-    }
-    return doc;
 }

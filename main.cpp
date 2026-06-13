@@ -1,4 +1,5 @@
-#include "KalshiClient.hpp"
+#include "kalshi/KalshiAuthClient.hpp"
+#include "kalshi/KalshiRestClient.hpp"
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -32,6 +33,10 @@ int main(){
         throw std::runtime_error("PEM file not found");
     }
     std::string pem = readFile(pem_path);
-    KalshiClient client(pem, api_key, base_url);
-    client.printSeriesInfo("KXHIGHNY");
+
+    KalshiAuth auth(pem, api_key);
+    KalshiRestClient rest_client(auth, base_url);
+
+
+    rest_client.printSeriesInfo("KXHIGHNY");
 }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -9,25 +11,19 @@
 class KalshiAuth {
 public:
     // need to remove the baseurl from here
-    KalshiAuth(const std::string& pem, const std::string& api_key, const std::string& base_api_url);
+    KalshiAuth(const std::string& pem, const std::string& api_key);
     ~KalshiAuth();
 
-    // need to move
-    void printSeriesInfo(const std::string& series_ticker);
-    void sign(); // need to implement
+    cpr::Header createHeader(const std::string& http_method, const std::string& req_path) const;
 private: 
     EVP_PKEY* private_key_; // used for signing
     std::string api_access_token_;
-    std::string base_api_url_;
-
-    std::string createHeader(const std::string& http_method, const std::string& req_path);
-    
 
     EVP_PKEY* loadPrivateKeyFromPem(const std::string& pem); 
-    std::vector<unsigned char> signRsaPssSha256(const std::string& message);
+    std::vector<unsigned char> signRsaPssSha256(const std::string& message) const;
 
-    std::string base64Encode(const unsigned char* data, size_t len);
+    std::string base64Encode(const unsigned char* data, size_t len) const;
 
-    int64_t timestampMs();
+    int64_t timestampMs() const;
 
 };

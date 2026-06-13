@@ -16,9 +16,8 @@
 #include <cpr/cpr.h>
 
 
-KalshiAuth::KalshiAuth(const std::string& pem, const std::string& api_key, const std::string& base_api_url){
+KalshiAuth::KalshiAuth(const std::string& pem, const std::string& api_key){
     api_access_token_ = api_key;
-    base_api_url_ = base_api_url;
     private_key_ = loadPrivateKeyFromPem(pem);
 }
 
@@ -27,7 +26,7 @@ KalshiAuth::~KalshiAuth() {
 }
 
 
-cpr::Header KalshiAuth::createHeader(const std::string& http_method, const std::string& req_path){
+cpr::Header KalshiAuth::createHeader(const std::string& http_method, const std::string& req_path) const{
     int64_t ts = timestampMs();
     std::string message_string = std::format("{}{}{}", ts, http_method, req_path);
     //sign
@@ -39,10 +38,10 @@ cpr::Header KalshiAuth::createHeader(const std::string& http_method, const std::
         {"KALSHI-ACCESS-KEY", api_access_token_},
         {"KALSHI-ACCESS-TIMESTAMP", std::to_string(ts)},
         {"KALSHI-ACCESS-SIGNATURE", access_signature}
-    }
+    };
 }
 
-EVP_PKEY* KalshiAuth::loadPrivateKeyFromPem(const std::string& pem) {
+EVP_PKEY* KalshiAuth::loadPrivateKeyFromPem(const std::string& pem){
     BIO* bio = BIO_new_mem_buf(pem.data(), static_cast<int>(pem.size()));
     if (!bio) throw std::runtime_error("BIO_new_mem_buf failed");
 
@@ -53,7 +52,7 @@ EVP_PKEY* KalshiAuth::loadPrivateKeyFromPem(const std::string& pem) {
     return pkey;
 }
 
-std::vector<unsigned char> KalshiAuth::signRsaPssSha256(const std::string& message){
+std::vector<unsigned char> KalshiAuth::signRsaPssSha256(const std::string& message) const {
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
     if (!ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
 
@@ -102,7 +101,7 @@ std::vector<unsigned char> KalshiAuth::signRsaPssSha256(const std::string& messa
     return signature;
 }
 
-std::string KalshiAuth::base64Encode(const unsigned char* data, size_t len) {
+std::string KalshiAuth::base64Encode(const unsigned char* data, size_t len) const {
     BIO* b64 = BIO_new(BIO_f_base64());
     BIO* mem = BIO_new(BIO_s_mem());
     b64 = BIO_push(b64, mem);
@@ -119,7 +118,7 @@ std::string KalshiAuth::base64Encode(const unsigned char* data, size_t len) {
     return out;
 }
 
-int64_t KalshiAuth::timestampMs() {
+int64_t KalshiAuth::timestampMs() const {
     using namespace std::chrono;
     return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }

@@ -1,4 +1,4 @@
-#include "kalshi/KalshiAuthClient.hpp"
+#include "kalshi/KalshiAuth.hpp"
 #include "kalshi/KalshiRestClient.hpp"
 #include <string>
 #include <fstream>

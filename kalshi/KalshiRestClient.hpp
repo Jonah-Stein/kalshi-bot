@@ -1,3 +1,5 @@
+#pragma once
+
 #include "KalshiAuth.hpp"
 
 #include <string>
@@ -18,4 +20,4 @@ private:
 
     cpr::Response getRequest(const std::string& path);
     simdjson::dom::element parseResponse(const cpr::Response& resp);
-}
+};

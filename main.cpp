@@ -21,7 +21,7 @@ std::string readFile(const std::string& path){
 
 int main(){
     
-    std::string base_url = "https://external-api.kalshi.com";
+    std::string base_url = std::getenv("KALSHI_API_BASE_URL");
     const char* api_key_env = std::getenv("KALSHI_API_KEY");
     if (!api_key_env){
         throw std::runtime_error("api key not set\n");

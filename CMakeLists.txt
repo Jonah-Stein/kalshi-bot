@@ -13,14 +13,17 @@ find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 find_package(cpr CONFIG REQUIRED)
 find_package(simdjson CONFIG REQUIRED)
+find_package(Boost CONFIG REQUIRED)
 
 add_executable(kalshi-bot
     main.cpp
     kalshi/KalshiAuth.cpp
     kalshi/KalshiRestClient.cpp
+    kalshi/KalshiWsClient.cpp
 )
 
 target_link_libraries(kalshi-bot PRIVATE
+    Boost::headers
     OpenSSL::SSL
     OpenSSL::Crypto
     cpr::cpr

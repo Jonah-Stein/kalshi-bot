@@ -9,6 +9,9 @@
 #include <boost/asio/ssl/stream.hpp>
 
 #include <cpr/cpr.h>
+#include <string>
+#include <format>
+#include <iostream>
 
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
@@ -25,7 +28,13 @@ using MessageCallback = std::function<void(const std::string& msg)>;
 void KalshiWsClient::start(MessageCallback on_message, std::string& ticker){
     on_message_ = on_message;
     ticker_ = ticker;
+    running_=true;
     worker_thread_ = std::thread([this]{run();});
+}
+
+void KalshiWsClient::stop(){
+    running_ = false;
+    if (worker_thread_.joinable()) worker_thread_.join();
 }
 
 void KalshiWsClient::run(){
@@ -41,7 +50,9 @@ void KalshiWsClient::run(){
         connect(ioc, stream, ws);
 
 
-        // subscribeToMarketFeed();
+        subscribeToOrderBook(ws);
+
+        readLoop(ws);
 
     } catch(const std::exception& e) {
         running_ = false;
@@ -78,4 +89,28 @@ void KalshiWsClient::connect(net::io_context& ioc, beast::ssl_stream<beast::tcp_
     ));
 
     ws.handshake(ws_host_, connection_path_);
+}
+
+void KalshiWsClient::subscribeToOrderBook(websocket::stream<beast::ssl_stream<beast::tcp_stream>&>& ws){
+    std::string subscribe_msg = std::format(R"({{
+        "id": 1,
+        "cmd": "subscribe",
+        "params": {{
+            "channels": ["orderbook_delta"],
+            "market_tickers": ["{}"] 
+        }}
+    }})", ticker_);
+    
+    ws.write(net::buffer(subscribe_msg));
+}
+
+void KalshiWsClient::readLoop(websocket::stream<beast::ssl_stream<beast::tcp_stream>&>& ws){
+    beast::flat_buffer buffer;
+
+    while(running_){
+        ws.read(buffer);
+        std::string msg = beast::buffers_to_string(buffer.data());
+        buffer.consume(buffer.size());
+        on_message_(msg);
+    }
 }

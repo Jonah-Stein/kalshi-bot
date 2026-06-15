@@ -25,6 +25,7 @@ public:
 
     
     void start(MessageCallback on_message, std::string& ticker);
+    void stop();
 
 private:
     const KalshiAuth& auth_;
@@ -37,7 +38,7 @@ private:
 
     void run();
     void connect(net::io_context& ioc, beast::ssl_stream<beast::tcp_stream>& stream, websocket::stream<beast::ssl_stream<beast::tcp_stream>&>& ws);
-    void subscribeToMarketFeed(std::string& ticker);
-    void readLoop();
+    void subscribeToOrderBook(websocket::stream<beast::ssl_stream<beast::tcp_stream>&>&ws);
+    void readLoop(websocket::stream<beast::ssl_stream<beast::tcp_stream>&>& ws);
 
 };

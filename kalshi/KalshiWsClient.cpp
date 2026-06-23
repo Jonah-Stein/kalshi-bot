@@ -106,11 +106,13 @@ void KalshiWsClient::subscribeToOrderBook(websocket::stream<beast::ssl_stream<be
 
 void KalshiWsClient::readLoop(websocket::stream<beast::ssl_stream<beast::tcp_stream>&>& ws){
     beast::flat_buffer buffer;
-
+    // might be a way to optimize this
+    // std::string msg;
     while(running_){
         ws.read(buffer);
         std::string msg = beast::buffers_to_string(buffer.data());
         buffer.consume(buffer.size());
-        on_message_(msg);
+        // might need "std::move(msg)"
+        on_message_(std::move(msg));
     }
 }

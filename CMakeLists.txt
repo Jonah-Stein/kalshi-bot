@@ -20,7 +20,7 @@ add_executable(kalshi-bot
     kalshi/KalshiAuth.cpp
     kalshi/KalshiRestClient.cpp
     kalshi/KalshiWsClient.cpp
-    infra/RingBuffer.cpp
+    testscripts/testringbuffer.cpp
 )
 
 target_link_libraries(kalshi-bot PRIVATE

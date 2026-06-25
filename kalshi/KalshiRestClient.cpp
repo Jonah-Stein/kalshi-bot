@@ -18,12 +18,20 @@ void KalshiRestClient::printSeriesInfo(const std::string& series_ticker){
     std::cout<<res.text << "\n";
 }
 
+void KalshiRestClient::printMarketsBySeries(const std::string& series_ticker){
+    std::string req_path = std::format("/trade-api/v2/markets");
+    cpr::Parameters params{{"series_ticker", series_ticker}, {"status", "open"}};
+    cpr::Response res = getRequest(req_path, params);
+    std::cout<<res.text << "\n";
+}
+
 // create a get request -- going to return a generic json
-cpr::Response KalshiRestClient::getRequest(const std::string& path){
+cpr::Response KalshiRestClient::getRequest(const std::string& path, const cpr::Parameters& params){
     cpr::Header auth_header = auth_.createHeader("GET", path);
 
     return cpr::Get(
         cpr::Url{std::format("{}{}", base_url_, path)},
+        params,
         auth_header
     );
 }

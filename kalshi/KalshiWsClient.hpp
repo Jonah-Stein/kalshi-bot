@@ -24,8 +24,9 @@ public:
     KalshiWsClient(const KalshiAuth& auth, std::string& ws_host, std::string& connection_path);
 
     
-    void start(MessageCallback on_message, std::string& ticker);
+    void start(MessageCallback on_message, const std::string& ticker);
     void stop();
+    // ^ when would we actually fire this
 
 private:
     const KalshiAuth& auth_;

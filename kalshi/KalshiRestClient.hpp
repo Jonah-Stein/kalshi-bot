@@ -12,12 +12,13 @@ public:
     KalshiRestClient(const KalshiAuth& auth, std::string& base_url);
 
     void printSeriesInfo(const std::string& series_ticker);
+    void printMarketsBySeries(const std::string& series_ticker);
 
 private:
     const KalshiAuth& auth_;
     std::string base_url_;
     simdjson::dom::parser json_parser_;
 
-    cpr::Response getRequest(const std::string& path);
+    cpr::Response getRequest(const std::string& path, const cpr::Parameters& params={});
     simdjson::dom::element parseResponse(const cpr::Response& resp);
 };

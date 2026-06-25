@@ -25,7 +25,7 @@ KalshiWsClient::KalshiWsClient(const KalshiAuth& auth, std::string& ws_host, std
 
 
 using MessageCallback = std::function<void(const std::string& msg)>;
-void KalshiWsClient::start(MessageCallback on_message, std::string& ticker){
+void KalshiWsClient::start(MessageCallback on_message, const std::string& ticker){
     on_message_ = on_message;
     ticker_ = ticker;
     running_=true;
@@ -109,6 +109,7 @@ void KalshiWsClient::readLoop(websocket::stream<beast::ssl_stream<beast::tcp_str
     // might be a way to optimize this
     // std::string msg;
     while(running_){
+        // TODO: might make this async read
         ws.read(buffer);
         std::string msg = beast::buffers_to_string(buffer.data());
         buffer.consume(buffer.size());

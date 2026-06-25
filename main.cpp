@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <queue>
 #include <format>
+#include <chrono>
 
 
 std::string readFile(const std::string& path){
@@ -34,26 +35,35 @@ std::string readEnvVar(const std::string& var_name){
 
 
 int main(){
-    // std::string base_url = readEnvVar("KALSHI_API_BASE_URL");
-    // std::string api_key = readEnvVar("KALSHI_API_KEY");
-    // std::string pem_path = readEnvVar("KALSHI_PEM_PATH");
-    // std::string ws_url = readEnvVar("KALSHI_WS_URL");
-    // std::string ws_connection_path = readEnvVar("KALSHI_WS_CONNECTION_PATH");
+    std::string base_url = readEnvVar("KALSHI_API_BASE_URL");
+    std::string api_key = readEnvVar("KALSHI_API_KEY");
+    std::string pem_path = readEnvVar("KALSHI_PEM_PATH");
+    std::string ws_url = readEnvVar("KALSHI_WS_URL");
+    std::string ws_connection_path = readEnvVar("KALSHI_WS_CONNECTION_PATH");
 
     // Have to load pem file
-    // std::string pem = readFile(pem_path);
+    std::string pem = readFile(pem_path);
 
-    // KalshiAuth auth(pem, api_key);
-    // KalshiRestClient rest_client(auth, base_url);
+    KalshiAuth auth(pem, api_key);
+    KalshiRestClient rest_client(auth, base_url);
     // rest_client.printSeriesInfo("KXHIGHNY");
+    // rest_client.printMarketsBySeries("KXHIGHNY");
     
 
-    // KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
+    KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
 
     // std::queue<std::string> q;
     // auto readIntoQueue = [&q](const std::string& msg){
 
     // }
-    runRingBufferTests();
 
+    auto printOutputs = [](const std::string& msg){
+        std::cout<<msg<<"\n";
+    };
+
+    ws_client.start(printOutputs, "KXHIGHNY-26JUN24-T82");
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::cout<<"Stopping...\n";
+    
+    ws_client.stop();
 }

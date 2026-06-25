@@ -21,6 +21,7 @@ add_executable(kalshi-bot
     kalshi/KalshiRestClient.cpp
     kalshi/KalshiWsClient.cpp
     testscripts/testringbuffer.cpp
+    orderbook/Orderbook.cpp
 )
 
 target_link_libraries(kalshi-bot PRIVATE

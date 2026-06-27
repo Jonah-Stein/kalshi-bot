@@ -16,8 +16,9 @@ public:
 
 private:
     std::vector<uint32_t> contracts_at_price_;
-    std::priority_queue<uint16_t> bids_;    
-    std::priority_queue<uint16_t, std::vector<uint16_t>, std::greater<uint16_t>> asks_;
+    uint16_t ask_price_level_;
+    uint16_t bid_price_level_;
+    uint16_t price_denominations_;
 
     void applyNoDelta(KalshiOrderbookDelta& delta);
     void applyYesDelta(KalshiOrderbookDelta& delta);

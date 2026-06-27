@@ -4,7 +4,10 @@
 
 
 Orderbook::Orderbook(uint16_t price_denominations){
+    price_denominations_ = price_denominations;
     contracts_at_price_.resize(price_denominations);
+    bid_price_level_ = 0;
+    ask_price_level_ = price_denominations_;
 }
 
 // when finding the net top for either bid or ask,
@@ -18,29 +21,46 @@ void Orderbook::applyDelta(KalshiOrderbookDelta& delta){
     }
 }
 
-void Orderbook::applySnapshot(KalshiOrderbookSnapshot& snapshot){}
+void Orderbook::applySnapshot(KalshiOrderbookSnapshot& snapshot){
+    // need to reset orderbook
+    std::fill(contracts_at_price_.begin(), contracts_at_price_.end(), 0);
+    bid_price_level_ = 0;
+    ask_price_level_ = price_denominations_;
+
+    // can set the bid and ask price levels like so since the api 
+    // returns the levels in sorted order.
+    for(KalshiPriceLevel& level: snapshot.yes_levels){
+        contracts_at_price_[level.price] = level.quantity;
+        bid_price_level_ = level.price;
+    }
+    for (KalshiPriceLevel& level: snapshot.no_levels){
+        uint16_t ask_price = price_denominations_ - level.price;
+        contracts_at_price_[ask_price] = level.quantity;
+        ask_price_level_ = ask_price;
+    }
+}
 
 void Orderbook::applyNoDelta(KalshiOrderbookDelta& delta){
-    uint16_t price_hundredths_cents = 10000 - delta.price_hundredths_cents;
+    uint16_t price_hundredths_cents = price_denominations_ - delta.price;
     contracts_at_price_[price_hundredths_cents] += delta.quantity_hundredths;
     if (contracts_at_price_[price_hundredths_cents] == 0){
-        while (!asks_.empty() && contracts_at_price_[asks_.top()] == 0){
-            asks_.pop();
+        while (ask_price_level_ < price_denominations_ - 1 && contracts_at_price_[ask_price_level_] == 0){
+            ask_price_level_++;
         } 
     }
-    else if(contracts_at_price_[price_hundredths_cents] == delta.quantity_hundredths){
-        asks_.push(price_hundredths_cents);
+    else if(price_hundredths_cents < ask_price_level_){
+        ask_price_level_ = price_hundredths_cents;
     }
 }
 
 void Orderbook::applyYesDelta(KalshiOrderbookDelta& delta){
-    contracts_at_price_[delta.price_hundredths_cents] += delta.quantity_hundredths;
-    if (contracts_at_price_[delta.price_hundredths_cents] == 0){
-        while (!bids_.empty() && contracts_at_price_[bids_.top()] == 0){
-            bids_.pop();
+    contracts_at_price_[delta.price] += delta.quantity_hundredths;
+    if (contracts_at_price_[delta.price] == 0){
+        while (bid_price_level_ > 1 && contracts_at_price_[bid_price_level_] == 0){
+            bid_price_level_--;
         }
     }
-    else if (contracts_at_price_[delta.price_hundredths_cents] == delta.quantity_hundredths){
-        bids_.push(delta.price_hundredths_cents);
+    else if (delta.price > bid_price_level_){
+        bid_price_level_ = delta.price;
     }
 }

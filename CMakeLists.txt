@@ -20,6 +20,7 @@ add_executable(kalshi-bot
     kalshi/KalshiAuth.cpp
     kalshi/KalshiRestClient.cpp
     kalshi/KalshiWsClient.cpp
+    kalshi/KalshiMessageParser.cpp
     testscripts/testringbuffer.cpp
     orderbook/Orderbook.cpp
 )

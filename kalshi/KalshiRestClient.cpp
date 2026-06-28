@@ -7,7 +7,8 @@
 #include <stdexcept>
 
 #include <cpr/cpr.h>
-#include <simdjson.h>
+
+#include <simdjson.h> // currently unused
 
 
 KalshiRestClient::KalshiRestClient(const KalshiAuth& auth, std::string& base_url): auth_(auth), base_url_(base_url){}

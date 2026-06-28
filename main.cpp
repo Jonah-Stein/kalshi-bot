@@ -67,6 +67,25 @@ int main(){
     }
     std::cout<< "The final result is: " << p << "\n";
 
+    // testing the parser
+    KalshiOrderbookDelta d = parser.fillKalshiOrderbookDelta(doc);
+    std::cout << std::format("Price: {}\n", d.price);
+
+    std::string sampleSnapshot = R"({"type":"orderbook_snapshot","sid":1,"seq":1,"msg":{"market_ticker":"KXHIGHNY-26JUN24-T82","market_id":"0445cdcb-e22f-4522-9981-aed4b66015ff","yes_dollars_fp":[["0.0100","2230.99"],["0.0200","806.00"],["0.0300","156.76"],["0.0400","101.00"],["0.0500","35.30"],["0.0600","2267.00"],["0.0700","151.00"],["0.0800","248.24"],["0.0900","81.00"],["0.1000","29.00"]],"no_dollars_fp":[["0.0100","419.78"],["0.0200","397.00"],["0.0300","200.00"],["0.0400","100.00"],["0.0600","100.00"],["0.0800","0.92"],["0.0900","20.32"],["0.1000","55.00"],["0.1100","100.00"],["0.1300","50.00"],["0.1500","5.00"],["0.1600","16.00"],["0.1800","123.42"],["0.2000","5.00"],["0.2400","11.96"],["0.2500","95.35"],["0.2600","100.00"],["0.2700","1612.34"],["0.2800","10.00"],["0.3000","127.00"],["0.3100","22.00"],["0.3200","41.19"],["0.3300","400.00"],["0.3400","22.00"],["0.3500","127.00"],["0.3600","18.00"],["0.3700","39.10"],["0.3800","19.96"],["0.3900","12.00"],["0.4000","25.00"],["0.4400","25.00"],["0.4500","5.00"],["0.4800","16.67"],["0.4900","2.00"],["0.5000","56.19"],["0.5500","105.00"],["0.5800","7.00"],["0.6000","6.00"],["0.6100","0.16"],["0.6200","15.00"],["0.6300","8.00"],["0.6400","22.00"],["0.6500","5.00"],["0.6800","88.00"],["0.6900","4.00"],["0.7000","5.00"],["0.7200","0.05"],["0.7500","5.00"],["0.7800","142.60"],["0.7900","1.46"],["0.8000","49.30"],["0.8100","677.00"],["0.8300","471.00"],["0.8400","248.28"],["0.8500","206.00"],["0.8800","78.00"],["0.8900","207.00"]]}})";
+
+    simdjson::dom::element docs = parser.parseResponse(sampleSnapshot);
+    simdjson::dom::element msg = doc["msg"];
+
+    simdjson::dom::array yes_levels = msg["yes_dollars_fp"].get_array();
+    for (simdjson::dom::element level : yes_levels){
+        simdjson::dom::array pair = level.get_array();
+        std::cout<< pair.at(0) << " : " << pair.at(1) << "\n";
+    }
+    std::cout <<"The real snapshot: \n";
+    KalshiOrderbookSnapshot s = parser.fillKalshiOrderbookSnapshot(docs);
+    for (KalshiPriceLevel l : s.yes_levels){
+        std::cout << std::format("{} : {}\n", l.price, l.quantity);
+    }
     //doc[msg].. is a dom::element type. Need to find a way to efficiently convert this
     // to an int (without having to go from this -> string -> int)
 

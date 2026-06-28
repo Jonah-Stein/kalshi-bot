@@ -16,4 +16,6 @@ public:
 private:
     simdjson::dom::parser json_parser_;
     uint8_t price_dec_degree_;
+
+    uint16_t parsePrice(std::string_view& str);
 };

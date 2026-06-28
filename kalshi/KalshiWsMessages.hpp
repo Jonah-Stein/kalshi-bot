@@ -7,7 +7,7 @@ enum class KalshiSide : uint8_t { Yes, No};
 
 struct KalshiPriceLevel {
     uint16_t price;
-    uint16_t quantity;
+    uint32_t quantity;
 };
 
 struct KalshiOrderbookSnapshot {
@@ -17,7 +17,7 @@ struct KalshiOrderbookSnapshot {
 
 struct KalshiOrderbookDelta {
     uint16_t price;
-    uint32_t quantity_hundredths;
+    int quantity_hundredths;
     KalshiSide side;
     uint64_t ts_ms;
 };

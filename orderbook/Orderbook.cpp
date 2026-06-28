@@ -1,11 +1,12 @@
 #include "Orderbook.hpp"
 #include "../kalshi/KalshiWsMessages.hpp"
 #include <cstdint>
+#include <iostream>
 
 
 Orderbook::Orderbook(uint16_t price_denominations){
     price_denominations_ = price_denominations;
-    contracts_at_price_.resize(price_denominations);
+    contracts_at_price_.resize(price_denominations, 0);
     bid_price_level_ = 0;
     ask_price_level_ = price_denominations_;
 }
@@ -63,4 +64,13 @@ void Orderbook::applyYesDelta(KalshiOrderbookDelta& delta){
     else if (delta.price > bid_price_level_){
         bid_price_level_ = delta.price;
     }
+}
+
+// future feature: format like kalshi snapshot
+void Orderbook::printSnapshot(){
+    for (int i = 0; i < contracts_at_price_.size(); i++){
+        std::cout<< i << " : " << contracts_at_price_[i] << "\n";
+    }
+    std::cout << "Bid price: " << bid_price_level_ << "\n";
+    std::cout << "Ask price: " << ask_price_level_ << "\n";
 }

@@ -13,6 +13,7 @@ public:
     Orderbook(uint16_t price_denominations);
     void applyDelta(KalshiOrderbookDelta& delta);
     void applySnapshot(KalshiOrderbookSnapshot& snapshot);
+    void printSnapshot();
 
 private:
     std::vector<uint32_t> contracts_at_price_;

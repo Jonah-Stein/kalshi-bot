@@ -1,9 +1,10 @@
 #include "kalshi/KalshiAuth.hpp"
 #include "kalshi/KalshiRestClient.hpp"
 #include "kalshi/KalshiWsClient.hpp"
-#include "testscripts/testringbuffer.hpp"
+#include "testscripts/testscripts.hpp"
 #include "kalshi/KalshiMessageParser.hpp"
 #include "orderbook/Orderbook.hpp"
+#include "infra/RingBuffer.hpp"
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -91,7 +92,7 @@ int main(){
     Orderbook o(100);
     o.applySnapshot(s);
     o.applyDelta(d);
-    o.printSnapshot();
+    // o.printSnapshot();
 
 
 
@@ -102,17 +103,48 @@ int main(){
     // auto readIntoQueue = [&q](const std::string& msg){
 
     // }
-    // KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
+    KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
 
+    RingBuffer ring(1024, 1024);
 
-    // auto printOutputs = [](const std::string& msg){
-    //     std::cout<<msg<<"\n";
-    // };
+    auto printOutputs = [](const std::string& msg){
+        std::cout<<msg<<"\n";
+    };
 
-    // ws_client.start(printOutputs, "KXHIGHNY-26JUN24-T82");
-    // std::this_thread::sleep_for(std::chrono::seconds(10));
-    // std::cout<<"Stopping...\n";
+    int num_messages_received = 0;
+    int num_messages_outputted = 0;
+    auto writeToRingBuffer = [&ring, &num_messages_received](std::string& msg){
+        num_messages_received++;
+        ring.TryWrite(msg);
+    };
+
+    auto consume = [&ring, &num_messages_outputted](){
+        while (true){
+            if (ring.TryRead() != nullptr){
+                std::cout<< *ring.TryRead()<<"\n";
+                num_messages_outputted++;
+                ring.FinishRead();
+            }
+        }
+    };
+
+    ws_client.start(writeToRingBuffer, "KXHIGHNY-26JUN29-B85.5");
     
-    // ws_client.stop();
+
+    std::thread consumer_thread = std::thread(consume);
+    std::this_thread::sleep_for(std::chrono::seconds(60));
+
+    std::cout<<"Stopping...\n";
+    
+    ws_client.stop();
+    consumer_thread.join();
+
+    // std::cout <<"reading from ring buffer: \n";
+    // while (ring.TryRead() != nullptr){
+    //     std::cout << *ring.TryRead() << "\n";
+    //     ring.FinishRead();
+    // }
+    std::cout <<"Done\n";
+    std::cout << std::format("Received: {}; Outputted: {}\n", num_messages_received, num_messages_outputted);
 
 }

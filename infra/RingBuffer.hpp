@@ -19,7 +19,19 @@
 
 class RingBuffer{
 public:
-    RingBuffer(uint32_t slots, uint32_t starting_slot_capacity);
+    RingBuffer(uint32_t slots, uint32_t initial_slot_capacity){
+        if (slots == 0 || (slots & (slots - 1)) != 0){
+            throw std::invalid_argument("slot must be nonzero power of 2");
+        }
+    
+        buffer_.resize(slots);
+        buffer_size_ = slots;
+        // initial slot capacity becomes useful for writing directly
+        // from beast buffer
+        for (std::string& slot: buffer_){
+            slot.resize(initial_slot_capacity);
+        }
+    }
 
     // Will fill the slot with 
     FORCE_INLINE bool TryWrite(std::string& msg);
@@ -48,19 +60,19 @@ private:
     std::vector<std::string> buffer_;
 };
 
-RingBuffer::RingBuffer(uint32_t slots, uint32_t initial_slot_capacity) {
-    if (slots == 0 || (slots & (slots - 1)) != 0){
-        throw std::invalid_argument("slot must be nonzero power of 2");
-    }
+// RingBuffer::RingBuffer(uint32_t slots, uint32_t initial_slot_capacity) {
+//     if (slots == 0 || (slots & (slots - 1)) != 0){
+//         throw std::invalid_argument("slot must be nonzero power of 2");
+//     }
 
-    buffer_.resize(slots);
-    buffer_size_ = slots;
-    // initial slot capacity becomes useful for writing directly
-    // from beast buffer
-    for (std::string& slot: buffer_){
-        slot.resize(initial_slot_capacity);
-    }
-}
+//     buffer_.resize(slots);
+//     buffer_size_ = slots;
+//     // initial slot capacity becomes useful for writing directly
+//     // from beast buffer
+//     for (std::string& slot: buffer_){
+//         slot.resize(initial_slot_capacity);
+//     }
+// }
 
 bool RingBuffer::TryWrite(std::string& msg) {
     if (producer_.counts - consumer_.published_counts.load(std::memory_order_acquire) >= buffer_size_){

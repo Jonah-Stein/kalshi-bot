@@ -18,7 +18,7 @@ namespace ssl = net::ssl;
 #include <functional>
 #include <atomic>
 
-using MessageCallback = std::function<void(const std::string& msg)>;
+using MessageCallback = std::function<void(std::string& msg)>;
 class KalshiWsClient {
 public:
     KalshiWsClient(const KalshiAuth& auth, std::string& ws_host, std::string& connection_path);

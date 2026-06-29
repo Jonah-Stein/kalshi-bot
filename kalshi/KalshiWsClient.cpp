@@ -24,7 +24,7 @@ KalshiWsClient::KalshiWsClient(const KalshiAuth& auth, std::string& ws_host, std
     auth_(auth), ws_host_(ws_host), connection_path_(connection_path) {}
 
 
-using MessageCallback = std::function<void(const std::string& msg)>;
+using MessageCallback = std::function<void(std::string& msg)>;
 void KalshiWsClient::start(MessageCallback on_message, const std::string& ticker){
     on_message_ = on_message;
     ticker_ = ticker;
@@ -107,13 +107,13 @@ void KalshiWsClient::subscribeToOrderBook(websocket::stream<beast::ssl_stream<be
 void KalshiWsClient::readLoop(websocket::stream<beast::ssl_stream<beast::tcp_stream>&>& ws){
     beast::flat_buffer buffer;
     // might be a way to optimize this
-    // std::string msg;
+    std::string msg;
     while(running_){
         // TODO: might make this async read
         ws.read(buffer);
-        std::string msg = beast::buffers_to_string(buffer.data());
+        msg = beast::buffers_to_string(buffer.data());
         buffer.consume(buffer.size());
         // might need "std::move(msg)"
-        on_message_(std::move(msg));
+        on_message_(msg);
     }
 }

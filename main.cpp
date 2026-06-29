@@ -36,6 +36,9 @@ std::string readEnvVar(const std::string& var_name){
     return raw_var;
 }
 
+// have to make something very similar to this, but instead of taking a ws_client,
+// it takes in a vector of strings
+
 
 int main(){
     std::string base_url = readEnvVar("KALSHI_API_BASE_URL");
@@ -95,56 +98,11 @@ int main(){
     // o.printSnapshot();
 
 
+    // KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
+    // testwebsocket(ws_client);
 
-    //doc[msg].. is a dom::element type. Need to find a way to efficiently convert this
-    // to an int (without having to go from this -> string -> int)
 
-    // std::queue<std::string> q;
-    // auto readIntoQueue = [&q](const std::string& msg){
 
-    // }
-    KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
-
-    RingBuffer ring(1024, 1024);
-
-    auto printOutputs = [](const std::string& msg){
-        std::cout<<msg<<"\n";
-    };
-
-    int num_messages_received = 0;
-    int num_messages_outputted = 0;
-    auto writeToRingBuffer = [&ring, &num_messages_received](std::string& msg){
-        num_messages_received++;
-        ring.TryWrite(msg);
-    };
-
-    auto consume = [&ring, &num_messages_outputted](){
-        while (true){
-            if (ring.TryRead() != nullptr){
-                std::cout<< *ring.TryRead()<<"\n";
-                num_messages_outputted++;
-                ring.FinishRead();
-            }
-        }
-    };
-
-    ws_client.start(writeToRingBuffer, "KXHIGHNY-26JUN29-B85.5");
     
-
-    std::thread consumer_thread = std::thread(consume);
-    std::this_thread::sleep_for(std::chrono::seconds(60));
-
-    std::cout<<"Stopping...\n";
-    
-    ws_client.stop();
-    consumer_thread.join();
-
-    // std::cout <<"reading from ring buffer: \n";
-    // while (ring.TryRead() != nullptr){
-    //     std::cout << *ring.TryRead() << "\n";
-    //     ring.FinishRead();
-    // }
-    std::cout <<"Done\n";
-    std::cout << std::format("Received: {}; Outputted: {}\n", num_messages_received, num_messages_outputted);
 
 }

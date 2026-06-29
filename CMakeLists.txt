@@ -22,6 +22,10 @@ add_executable(kalshi-bot
     kalshi/KalshiWsClient.cpp
     kalshi/KalshiMessageParser.cpp
     testscripts/testringbuffer.cpp
+    testscripts/generatedeltas.cpp
+    testscripts/testwebsocket.cpp
+    testscripts/orderbookwithmessages.cpp
+    testscripts/orderbookupdates.cpp
     orderbook/Orderbook.cpp
 )
 

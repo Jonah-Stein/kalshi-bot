@@ -74,3 +74,7 @@ void Orderbook::printSnapshot(){
     std::cout << "Bid price: " << bid_price_level_ << "\n";
     std::cout << "Ask price: " << ask_price_level_ << "\n";
 }
+
+std::vector<uint32_t> Orderbook::getSnapshot() const{
+    return contracts_at_price_;
+}

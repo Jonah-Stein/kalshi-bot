@@ -14,6 +14,7 @@ public:
     void applyDelta(KalshiOrderbookDelta& delta);
     void applySnapshot(KalshiOrderbookSnapshot& snapshot);
     void printSnapshot();
+    std::vector<uint32_t> getSnapshot() const;
 
 private:
     std::vector<uint32_t> contracts_at_price_;

@@ -6,6 +6,7 @@
 #include <string>
 #include <thread>
 #include <format>
+#include <atomic>
 
 void testwebsocket(KalshiWsClient& ws_client){
     RingBuffer ring(1024, 1024);
@@ -14,6 +15,8 @@ void testwebsocket(KalshiWsClient& ws_client){
         std::cout<<msg<<"\n";
     };
 
+    std::atomic<bool> done = false;
+
     int num_messages_received = 0;
     int num_messages_outputted = 0;
     auto writeToRingBuffer = [&ring, &num_messages_received](std::string& msg){
@@ -21,8 +24,8 @@ void testwebsocket(KalshiWsClient& ws_client){
         ring.TryWrite(msg);
     };
 
-    auto consume = [&ring, &num_messages_outputted](){
-        while (true){
+    auto consume = [&ring, &num_messages_outputted, &done](){
+        while (ring.TryRead() != nullptr || !done.load(std::memory_order_acquire)){
             if (ring.TryRead() != nullptr){
                 std::cout<< *ring.TryRead()<<"\n";
                 num_messages_outputted++;
@@ -31,15 +34,16 @@ void testwebsocket(KalshiWsClient& ws_client){
         }
     };
 
-    ws_client.start(writeToRingBuffer, "KXHIGHNY-26JUN29-B85.5");
+    ws_client.start(writeToRingBuffer, "KXHIGHNY-26JUN30-B89.5");
     
 
     std::thread consumer_thread = std::thread(consume);
-    std::this_thread::sleep_for(std::chrono::seconds(60));
+    std::this_thread::sleep_for(std::chrono::seconds(10));
 
     std::cout<<"Stopping...\n";
     
     ws_client.stop();
+    done.store(true, std::memory_order_release);
     consumer_thread.join();
 
     std::cout <<"Done\n";

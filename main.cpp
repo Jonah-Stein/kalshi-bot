@@ -100,8 +100,8 @@ int main(){
     test_orderbook_updates();
 
 
-    // KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
-    // testwebsocket(ws_client);
+    KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
+    testwebsocket(ws_client);
 
 
 

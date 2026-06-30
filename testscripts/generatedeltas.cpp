@@ -9,10 +9,17 @@
 #include <format>
 
 
-std::string generateDeltaMessage(int seq, int price, int quantity, KalshiSide side, uint64_t ts_ms){
+std::string generateDeltaMessage(int seq, int price, int quantity, KalshiSide side, uint64_t ts_ms, int price_denominations){
     std::string s = side == KalshiSide::Yes ? "yes" : "no";
     //convert price to string
-    std::string price_str = std::format("0.{:-04}", price);
+    // this is the problem
+    std::string price_str;
+    if (price_denominations == 100){
+        price_str = std::format("0.{:02}00", price);
+    } else {
+        price_str = std::format("0.{:04}", price);
+    }
+    
     //convert quantity to string
     std::string quantity_str = std::format("{}.00", quantity);
 
@@ -42,21 +49,25 @@ std::vector<std::string> generateDeltaMessages(int num_messages,
         // generate price
         int price = randomPrice(engine);
 
-        // generate quantity
-        if (!cumulated_quantities.count(price)){
-            cumulated_quantities[price] = 0;
-        }
-        int quantity = randomQuantity(engine);
-        while (quantity < 0 && -quantity > cumulated_quantities[price]){
-            quantity = randomQuantity(engine);
-        }
-        cumulated_quantities[price] += quantity;
         // pick side
         KalshiSide side = chooseSide(engine) == 0 ? KalshiSide::Yes : KalshiSide::No;
+        int price_to_track = side == KalshiSide::Yes ? price : 100 - price;
+        if (!cumulated_quantities.count(price_to_track)){
+            cumulated_quantities[price_to_track] = 0;
+        }
 
+        // generate quantity
+        int quantity = randomQuantity(engine);
+        while (quantity < 0 && -(quantity*100) > cumulated_quantities[price_to_track]){
+            quantity = randomQuantity(engine);
+        }
+        // *100 since quantity is measured in hundredths
+        cumulated_quantities[price_to_track] += quantity*100;
+        // std::cout <<std::format("Price generated: {}, price in message: {}\n", price, price_to_track);
+        
         uint64_t ts_ms = timestampMs();
         // generate
-        deltas.push_back(generateDeltaMessage(i+1, price, quantity, side, ts_ms));
+        deltas.push_back(generateDeltaMessage(i+1, price, quantity, side, ts_ms, 100));
     }
     return deltas;
 }
@@ -89,20 +100,21 @@ std::vector<KalshiOrderbookDelta> generateDeltaObjects(int num_messages,
         // generate price
         int price = randomPrice(engine);
 
-        // generate quantity
-        if (!cumulated_quantities.count(price)){
-            cumulated_quantities[price] = 0;
-        }
-        int quantity = randomQuantity(engine);
-        while (quantity < 0 && -quantity > cumulated_quantities[price]){
-            quantity = randomQuantity(engine);
-        }
-        
         // pick side
         KalshiSide side = chooseSide(engine) == 0 ? KalshiSide::Yes : KalshiSide::No;
 
         int price_to_track = side == KalshiSide::Yes ? price : 100 - price;
+        if (!cumulated_quantities.count(price_to_track)){
+            cumulated_quantities[price_to_track] = 0;
+        }
+
+        // generate quantity
+        int quantity = randomQuantity(engine);
+        while (quantity < 0 && -quantity > cumulated_quantities[price_to_track]){
+            quantity = randomQuantity(engine);
+        }
         cumulated_quantities[price_to_track] += quantity;
+        
         uint64_t ts_ms = timestampMs();
         // generate
         deltas.push_back(generateDeltaObject(price, quantity, side, ts_ms));

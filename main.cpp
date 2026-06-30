@@ -97,11 +97,13 @@ int main(){
     o.applyDelta(d);
     // o.printSnapshot();
 
-    test_orderbook_updates();
+    // this is passing
+    // test_orderbook_updates();
+    test_orderbook_with_messages();
 
 
-    KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
-    testwebsocket(ws_client);
+    // KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
+    // testwebsocket(ws_client);
 
 
 

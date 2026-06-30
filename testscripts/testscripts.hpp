@@ -23,7 +23,7 @@ std::vector<KalshiOrderbookDelta> generateDeltaObjects(int num_messages,
         int quantity_ub,
         std::unordered_map<int, int>& cumulated_quantities);
 
-std::string generateDeltaMessage(int seq, int price, int quantity, KalshiSide side, uint64_t ts_ms);
+std::string generateDeltaMessage(int seq, int price, int quantity, KalshiSide side, uint64_t ts_ms, int price_denominations);
 KalshiOrderbookDelta generateDeltaObject(int price, int quantity, KalshiSide side, uint64_t ts_ms);
 uint64_t timestampMs();
 

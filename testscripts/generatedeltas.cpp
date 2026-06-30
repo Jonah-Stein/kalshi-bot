@@ -97,10 +97,12 @@ std::vector<KalshiOrderbookDelta> generateDeltaObjects(int num_messages,
         while (quantity < 0 && -quantity > cumulated_quantities[price]){
             quantity = randomQuantity(engine);
         }
-        cumulated_quantities[price] += quantity;
+        
         // pick side
         KalshiSide side = chooseSide(engine) == 0 ? KalshiSide::Yes : KalshiSide::No;
 
+        int price_to_track = side == KalshiSide::Yes ? price : 100 - price;
+        cumulated_quantities[price_to_track] += quantity;
         uint64_t ts_ms = timestampMs();
         // generate
         deltas.push_back(generateDeltaObject(price, quantity, side, ts_ms));

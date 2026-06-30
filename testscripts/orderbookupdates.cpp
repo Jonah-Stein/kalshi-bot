@@ -17,6 +17,7 @@ void test_orderbook_updates() {
     std::vector<KalshiOrderbookDelta> deltas = generateDeltaObjects(1000, 100, -1000, 1000, delta_changes);
 
     for (KalshiOrderbookDelta delta : deltas){
+        // std::cout << std::format("Price: {}; quantity: {}; side: {}\n", delta.price, delta.quantity_hundredths, toString(delta.side));
         orderbook.applyDelta(delta);
     }
     

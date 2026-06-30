@@ -4,6 +4,14 @@
 #include <vector>
 
 enum class KalshiSide : uint8_t { Yes, No};
+inline std::string_view toString(KalshiSide side) {
+    switch (side) {
+        case KalshiSide::Yes: return "yes";
+        case KalshiSide::No: return "no";
+    }
+}
+
+
 
 struct KalshiPriceLevel {
     uint16_t price;

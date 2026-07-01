@@ -13,6 +13,7 @@ public:
 
     void printSeriesInfo(const std::string& series_ticker);
     void printMarketsBySeries(const std::string& series_ticker);
+    std::string getMarketOrderbook(const std::string& market_ticker);
 
 private:
     const KalshiAuth& auth_;

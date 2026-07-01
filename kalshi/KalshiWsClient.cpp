@@ -33,7 +33,7 @@ void KalshiWsClient::start(MessageCallback on_message, const std::string& ticker
 }
 
 void KalshiWsClient::stop(){
-    running_ = false;
+    running_.store(false, std::memory_order_release);
     if (worker_thread_.joinable()) worker_thread_.join();
 }
 
@@ -116,4 +116,6 @@ void KalshiWsClient::readLoop(websocket::stream<beast::ssl_stream<beast::tcp_str
         // might need "std::move(msg)"
         on_message_(msg);
     }
+    std::string stop = R"({"type": "stop"})";
+    on_message_(stop);
 }

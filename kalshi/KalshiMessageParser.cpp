@@ -121,3 +121,50 @@ KalshiOrderbookSnapshot KalshiMessageParser::fillKalshiOrderbookSnapshot(simdjso
     }
     return snapshot;
 }
+
+KalshiOrderbookSnapshot KalshiMessageParser::fillKalshiOrderbookSnapshotFromRest(simdjson::dom::element& doc){
+    KalshiOrderbookSnapshot snapshot;
+    simdjson::dom::element msg = doc["orderbook_fp"];
+
+    simdjson::dom::array yes_levels = msg["yes_dollars"].get_array();
+    simdjson::dom::array no_levels = msg["no_dollars"].get_array();
+
+    snapshot.yes_levels = {};
+    for (simdjson::dom::array level : yes_levels){
+        std::string_view price_str = level.at(0).get_string();
+        std::string_view quantity_str = level.at(1).get_string();
+
+        KalshiPriceLevel pl;
+        pl.price = parsePrice(price_str);
+
+        pl.quantity = 0;
+        for (int i = 0; i < quantity_str.size(); i++){
+            if (quantity_str[i] == '.'){
+                continue;
+            }
+            pl.quantity *= 10;
+            pl.quantity += static_cast<int>(quantity_str[i] - '0');
+        }
+        snapshot.yes_levels.push_back(pl);
+    }
+
+    snapshot.no_levels = {};
+    for (simdjson::dom::array level : no_levels){
+        std::string_view price_str = level.at(0).get_string();
+        std::string_view quantity_str = level.at(1).get_string();
+
+        KalshiPriceLevel pl;
+        pl.price = parsePrice(price_str);
+
+        pl.quantity = 0;
+        for (int i = 0; i < quantity_str.size(); i++){
+            if (quantity_str[i] == '.'){
+                continue;
+            }
+            pl.quantity *= 10;
+            pl.quantity += static_cast<int>(quantity_str[i] - '0');
+        }
+        snapshot.no_levels.push_back(pl);
+    }
+    return snapshot;
+}

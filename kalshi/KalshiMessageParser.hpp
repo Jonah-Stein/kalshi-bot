@@ -13,6 +13,7 @@ public:
 
     KalshiOrderbookDelta fillKalshiOrderbookDelta(simdjson::dom::element& doc);
     KalshiOrderbookSnapshot fillKalshiOrderbookSnapshot(simdjson::dom::element& doc);
+    KalshiOrderbookSnapshot fillKalshiOrderbookSnapshotFromRest(simdjson::dom::element& doc);
 private:
     simdjson::dom::parser json_parser_;
     uint8_t price_dec_degree_;

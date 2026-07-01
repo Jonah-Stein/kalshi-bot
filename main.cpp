@@ -36,8 +36,91 @@ std::string readEnvVar(const std::string& var_name){
     return raw_var;
 }
 
-// have to make something very similar to this, but instead of taking a ws_client,
-// it takes in a vector of strings
+void runSystem(const std::string& market_ticker, int decimal_degrees, KalshiWsClient& ws_client, KalshiRestClient& rest_client){
+    // in future, this should take into account decimal_degrees 
+    Orderbook orderbook(100);
+    KalshiMessageParser parser(2);
+
+    RingBuffer ring(1024, 1024);
+    int num_received = 0;
+    auto writeToRingBuffer = [&ring, &num_received](std::string& msg){
+        while (!ring.TryWrite(msg)){
+            continue;
+        };
+        num_received++;
+    };
+
+    auto consume = [&ring, &parser, &orderbook](){
+        bool stopped = false;
+        while (!stopped){
+            if (ring.TryRead() == nullptr){
+                continue;
+            }
+            simdjson::dom::element doc = parser.parseResponse(*ring.TryRead());
+            std::cout<<*ring.TryRead()<<"\n";
+            ring.FinishRead();
+
+            std::string_view type = doc["type"];
+
+            // can do this efficiently.
+            // Need to add a stop message to th ring buffer
+            // choosing between 'orderbook_delta', 'orderbook_snapshot', 'stop', 'subscribed'
+            // std::cout<< "type: " << type<< "\n";
+            switch (type.size()){
+                case 15: {
+                    // delta
+                    KalshiOrderbookDelta delta = parser.fillKalshiOrderbookDelta(doc);
+                    orderbook.applyDelta(delta);
+                    break;
+                }
+                case 18: {
+                    //snapshot
+                    KalshiOrderbookSnapshot snapshot = parser.fillKalshiOrderbookSnapshot(doc);
+                    orderbook.applySnapshot(snapshot);
+                    break;
+                }
+                case 4: {
+                    //stop
+                    stopped = true;
+                    break;
+                }
+            }
+        }
+    };
+
+    ws_client.start(writeToRingBuffer, market_ticker);
+    std::thread consumer_thread = std::thread(consume);
+
+    // TODO: Need some sign handler to stop the websocket
+    std::this_thread::sleep_for(std::chrono::seconds(20));
+    ws_client.stop();
+    consumer_thread.join();
+
+
+    // get market orderbook from rest api, create a new orderbook
+    // then compare the two orderbooks
+    std::string current_snapshot_res = rest_client.getMarketOrderbook(market_ticker);
+    simdjson::dom::element doc = parser.parseResponse(current_snapshot_res);
+    KalshiOrderbookSnapshot snapshot = parser.fillKalshiOrderbookSnapshotFromRest(doc);
+
+    Orderbook current(100);
+    current.applySnapshot(snapshot);
+
+    // compare the two orderbooks
+    std::vector<uint32_t> calculated_snapshot = orderbook.getSnapshot();
+    std::vector<uint32_t> current_snapshot = current.getSnapshot();
+
+    int differences = 0;
+    for (int i = 0; i < 100; i++){
+        if (calculated_snapshot[i] == current_snapshot[i]){
+            continue;
+        }
+        differences++;
+        std::cout<<std::format("{}: Calculated: {} ; Current: {}\n", i, calculated_snapshot[i], current_snapshot[i]);
+    }
+    std::cout << differences << " differences\n";
+    std::cout << "Received " << num_received << " messages\n";
+}
 
 
 int main(){
@@ -57,24 +140,6 @@ int main(){
 
     std::string sampleDelta = R"({"type":"orderbook_delta","sid":1,"seq":2,"msg":{"market_ticker":"KXHIGHNY-26JUN24-T82","market_id":"0445cdcb-e22f-4522-9981-aed4b66015ff","price_dollars":"0.1000","delta_fp":"7.00","side":"yes","ts":"2026-06-24T15:49:55.033836Z","ts_ms":1782316195033}})";
     KalshiMessageParser parser(2);
-    simdjson::dom::element doc = parser.parseResponse(sampleDelta);
-
-    // std::cout<<doc["msg"]["price_dollars"]<<"\n";
-
-    // std::string_view price = doc["msg"]["price_dollars"];
-    // // looked into it, and supposedly its fastest to manually construt the
-    // // price by iterating though the substring
-    // int degree =2;
-    // uint16_t p = 0;
-    // for (int i = 2; i < 2+degree; i++){
-    //     p *= 10;
-    //     p += static_cast<int>(price[i] - '0');
-    // }
-    // std::cout<< "The final result is: " << p << "\n";
-
-    // // testing the parser
-    KalshiOrderbookDelta d = parser.fillKalshiOrderbookDelta(doc);
-    // std::cout << std::format("Price: {}\n", d.price);
 
     std::string sampleSnapshot = R"({"type":"orderbook_snapshot","sid":1,"seq":1,"msg":{"market_ticker":"KXHIGHNY-26JUN24-T82","market_id":"0445cdcb-e22f-4522-9981-aed4b66015ff","yes_dollars_fp":[["0.0100","2230.99"],["0.0200","806.00"],["0.0300","156.76"],["0.0400","101.00"],["0.0500","35.30"],["0.0600","2267.00"],["0.0700","151.00"],["0.0800","248.24"],["0.0900","81.00"],["0.1000","29.00"]],"no_dollars_fp":[["0.0100","419.78"],["0.0200","397.00"],["0.0300","200.00"],["0.0400","100.00"],["0.0600","100.00"],["0.0800","0.92"],["0.0900","20.32"],["0.1000","55.00"],["0.1100","100.00"],["0.1300","50.00"],["0.1500","5.00"],["0.1600","16.00"],["0.1800","123.42"],["0.2000","5.00"],["0.2400","11.96"],["0.2500","95.35"],["0.2600","100.00"],["0.2700","1612.34"],["0.2800","10.00"],["0.3000","127.00"],["0.3100","22.00"],["0.3200","41.19"],["0.3300","400.00"],["0.3400","22.00"],["0.3500","127.00"],["0.3600","18.00"],["0.3700","39.10"],["0.3800","19.96"],["0.3900","12.00"],["0.4000","25.00"],["0.4400","25.00"],["0.4500","5.00"],["0.4800","16.67"],["0.4900","2.00"],["0.5000","56.19"],["0.5500","105.00"],["0.5800","7.00"],["0.6000","6.00"],["0.6100","0.16"],["0.6200","15.00"],["0.6300","8.00"],["0.6400","22.00"],["0.6500","5.00"],["0.6800","88.00"],["0.6900","4.00"],["0.7000","5.00"],["0.7200","0.05"],["0.7500","5.00"],["0.7800","142.60"],["0.7900","1.46"],["0.8000","49.30"],["0.8100","677.00"],["0.8300","471.00"],["0.8400","248.28"],["0.8500","206.00"],["0.8800","78.00"],["0.8900","207.00"]]}})";
 
@@ -92,17 +157,20 @@ int main(){
     //     std::cout << std::format("{} : {}\n", l.price, l.quantity);
     // }
 
-    Orderbook o(100);
-    o.applySnapshot(s);
-    o.applyDelta(d);
+    // Orderbook o(100);
+    // o.applySnapshot(s);
+    // o.applyDelta(d);
     // o.printSnapshot();
 
     // this is passing
     // test_orderbook_updates();
-    test_orderbook_with_messages();
+    // test_orderbook_with_messages();
+
+    KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
+    runSystem("KXHIGHNY-26JUL02-T99", 2, ws_client, rest_client);
 
 
-    // KalshiWsClient ws_client(auth, ws_url, ws_connection_path);
+    
     // testwebsocket(ws_client);
 
 

@@ -49,3 +49,10 @@ simdjson::dom::element KalshiRestClient::parseResponse(const cpr::Response& resp
     }
     return doc;
 }
+
+std::string KalshiRestClient::getMarketOrderbook(const std::string& market_ticker){
+    std::string req_path = std::format("/trade-api/v2/markets/{}/orderbook", market_ticker);
+    cpr::Response res = getRequest(req_path);
+
+    return res.text;
+}

@@ -155,7 +155,7 @@ void runSystem(const std::string& market_ticker, int decimal_degrees, KalshiWsCl
         overall_diff += diff;
         std::cout << diff << " ns\n";
     }
-    std::cout << "Average processing time: " << (overall_diff / times_received.size()) << "\n";
+    std::cout << "Average processing time: " << (overall_diff / (times_received.size()-2)) << "\n";
 }
 
 

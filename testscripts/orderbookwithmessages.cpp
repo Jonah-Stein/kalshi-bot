@@ -29,18 +29,25 @@ void test_orderbook_with_messages() {
         }
         all_written.store(true, std::memory_order_release);
     };
-
-    // Need to edit this consume to actually update the order
-    // and this will probably be the actual production logic
+ 
     auto consume = [&ring, &all_written, &parser, &orderbook](){
         while (ring.TryRead() != nullptr || !all_written.load(std::memory_order_acquire)){
             if (ring.TryRead() == nullptr){
                 continue;
             }
-            simdjson::dom::element doc = parser.parseResponse(*ring.TryRead());
+            simdjson::padded_string padded(*ring.TryRead());
+            simdjson::ondemand::document doc = parser.parseResponse(padded);
             ring.FinishRead();
 
-            KalshiOrderbookDelta delta = parser.fillKalshiOrderbookDelta(doc);
+            simdjson::ondemand::object msg;
+            std::string_view discard_string;
+            std::uint32_t discard_int;
+            doc["type"].get_string().get(discard_string);
+            doc["sid"].get_uint32().get(discard_int);
+            doc["seq"].get_uint32().get(discard_int);
+            doc["msg"].get_object().get(msg);
+
+            KalshiOrderbookDelta delta = parser.fillKalshiOrderbookDelta(msg);
             // apply the delta
             orderbook.applyDelta(delta);
         }

@@ -21,7 +21,10 @@ using tcp=net::ip::tcp;
 
 
 KalshiWsClient::KalshiWsClient(const KalshiAuth& auth, std::string& ws_host, std::string& connection_path): 
-    auth_(auth), ws_host_(ws_host), connection_path_(connection_path) {}
+    auth_(auth), ws_host_(ws_host), connection_path_(connection_path), times_received_({}){
+
+        times_received_.reserve(1024);
+    }
 
 
 using MessageCallback = std::function<void(std::string& msg)>;
@@ -111,6 +114,7 @@ void KalshiWsClient::readLoop(websocket::stream<beast::ssl_stream<beast::tcp_str
     while(running_){
         // TODO: might make this async read
         ws.read(buffer);
+        times_received_.push_back(timestampNs());
         msg = beast::buffers_to_string(buffer.data());
         buffer.consume(buffer.size());
         // might need "std::move(msg)"
@@ -118,4 +122,19 @@ void KalshiWsClient::readLoop(websocket::stream<beast::ssl_stream<beast::tcp_str
     }
     std::string stop = R"({"type": "stop"})";
     on_message_(stop);
+}
+
+uint64_t KalshiWsClient::timestampMs() const {
+    using namespace std::chrono;
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+uint64_t KalshiWsClient::timestampNs() const {
+    using namespace std::chrono;
+    return duration_cast<nanoseconds>(
+        steady_clock::now().time_since_epoch()
+    ).count();
+}
+
+std::vector<uint64_t> KalshiWsClient::getMessageArrivalTimes(){
+    return times_received_;
 }

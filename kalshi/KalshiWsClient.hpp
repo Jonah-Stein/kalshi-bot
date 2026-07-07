@@ -28,6 +28,8 @@ public:
     void stop();
     // ^ when would we actually fire this
 
+    std::vector<uint64_t> getMessageArrivalTimes();
+
 private:
     const KalshiAuth& auth_;
     std::string ws_host_;
@@ -36,10 +38,13 @@ private:
     std::thread worker_thread_;
     MessageCallback on_message_;
     std::string ticker_;
+    std::vector<uint64_t> times_received_;
 
     void run();
     void connect(net::io_context& ioc, beast::ssl_stream<beast::tcp_stream>& stream, websocket::stream<beast::ssl_stream<beast::tcp_stream>&>& ws);
     void subscribeToOrderBook(websocket::stream<beast::ssl_stream<beast::tcp_stream>&>&ws);
     void readLoop(websocket::stream<beast::ssl_stream<beast::tcp_stream>&>& ws);
+    uint64_t timestampMs() const;
+    uint64_t timestampNs() const;
 
 };

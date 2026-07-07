@@ -35,19 +35,19 @@ void test_orderbook_with_messages() {
             if (ring.TryRead() == nullptr){
                 continue;
             }
-            simdjson::padded_string padded(*ring.TryRead());
-            simdjson::ondemand::document doc = parser.parseResponse(padded);
+            // simdjson::padded_string padded(*ring.TryRead());
+            simdjson::dom::element doc = parser.parseResponse(*ring.TryRead());
             ring.FinishRead();
 
-            simdjson::ondemand::object msg;
-            std::string_view discard_string;
-            std::uint32_t discard_int;
-            doc["type"].get_string().get(discard_string);
-            doc["sid"].get_uint32().get(discard_int);
-            doc["seq"].get_uint32().get(discard_int);
-            doc["msg"].get_object().get(msg);
+            // simdjson::ondemand::object msg;
+            // std::string_view discard_string;
+            // std::uint32_t discard_int;
+            // doc["type"].get_string().get(discard_string);
+            // doc["sid"].get_uint32().get(discard_int);
+            // doc["seq"].get_uint32().get(discard_int);
+            // doc["msg"].get_object().get(msg);
 
-            KalshiOrderbookDelta delta = parser.fillKalshiOrderbookDelta(msg);
+            KalshiOrderbookDelta delta = parser.fillKalshiOrderbookDelta(doc);
             // apply the delta
             orderbook.applyDelta(delta);
         }

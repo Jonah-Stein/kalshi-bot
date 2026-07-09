@@ -17,6 +17,8 @@ find_package(Boost CONFIG REQUIRED)
 
 add_executable(kalshi-bot
     main.cpp
+    helpers/timestamps.cpp
+    helpers/latencystats.cpp
     kalshi/KalshiAuth.cpp
     kalshi/KalshiRestClient.cpp
     kalshi/KalshiWsClient.cpp

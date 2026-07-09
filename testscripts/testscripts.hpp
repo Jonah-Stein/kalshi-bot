@@ -26,9 +26,16 @@ std::vector<KalshiOrderbookDelta> generateDeltaObjects(int num_messages,
 std::string generateDeltaMessage(int seq, int price, int quantity, KalshiSide side, uint64_t ts_ms, int price_denominations);
 KalshiOrderbookDelta generateDeltaObject(int price, int quantity, KalshiSide side, uint64_t ts_ms);
 uint64_t timestampMs();
+void generateDeltasFile(int num_messages, 
+    int price_denominations,
+    int quantity_lb,
+    int quantity_ub,
+    std::unordered_map<int, int>& cumulated_quantities, const std::string& file_name);
+
 
 void testwebsocket(KalshiWsClient& ws_client);
 
 void test_orderbook_with_messages();
+void test_orderbook_with_messages_from_file(const std::string& path);
 
 void test_orderbook_updates();

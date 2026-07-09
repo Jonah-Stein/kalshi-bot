@@ -1,5 +1,6 @@
 #include "testscripts.hpp"
 #include "../kalshi/KalshiWsMessages.hpp"
+#include "../helpers/helpers.hpp"
 #include <string>
 #include <vector>
 #include <random>
@@ -7,6 +8,7 @@
 #include <chrono>
 #include <map>
 #include <format>
+#include <fstream>
 
 
 std::string generateDeltaMessage(int seq, int price, int quantity, KalshiSide side, uint64_t ts_ms, int price_denominations){
@@ -122,12 +124,47 @@ std::vector<KalshiOrderbookDelta> generateDeltaObjects(int num_messages,
     return deltas;
 }
 
+// instad of accepting a dictionary, need to print a snapshot
+// that can be used as a source of truth
+void generateDeltasFile(int num_messages, 
+    int price_denominations,
+    int quantity_lb,
+    int quantity_ub,
+    std::unordered_map<int, int>& cumulated_quantities, const std::string& file_name){
+    
+    // replace this with a file
+    std::ofstream file(file_name);
+    
 
+    // some random generator
+    static std::default_random_engine engine{std::random_device{}()};
+    // is this inclusive?
+    std::uniform_int_distribution<int> randomPrice{1, price_denominations-1};
+    std::uniform_int_distribution<int> randomQuantity{quantity_lb, quantity_ub};
+    std::uniform_int_distribution<int> chooseSide{0,1};
 
+    for (int i = 0; i < num_messages; i++){
+        // generate price
+        int price = randomPrice(engine);
 
+        // pick side
+        KalshiSide side = chooseSide(engine) == 0 ? KalshiSide::Yes : KalshiSide::No;
+        int price_to_track = side == KalshiSide::Yes ? price : 100 - price;
+        if (!cumulated_quantities.count(price_to_track)){
+            cumulated_quantities[price_to_track] = 0;
+        }
 
-
-uint64_t timestampMs(){
-    using namespace std::chrono;
-    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+        // generate quantity
+        int quantity = randomQuantity(engine);
+        while (quantity < 0 && -(quantity*100) > cumulated_quantities[price_to_track]){
+            quantity = randomQuantity(engine);
+        }
+        // *100 since quantity is measured in hundredths
+        cumulated_quantities[price_to_track] += quantity*100;
+        
+        // uint64_t ts_ms = timestampMs();
+        uint64_t ts_ms = 0;
+        // generate
+        file << generateDeltaMessage(i+1, price, quantity, side, ts_ms, 100) << "\n";
+    }
 }

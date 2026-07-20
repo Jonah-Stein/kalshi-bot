@@ -1,5 +1,6 @@
 #include "../orderbook/Orderbook.hpp"
-#include "../infra/RingBuffer.hpp"
+#include "../infra/StringRingBuffer.hpp"
+#include "../infra/ObjectRingBuffer.hpp"
 #include "../kalshi/KalshiMessageParser.hpp"
 #include "../helpers/helpers.hpp"
 #include "testscripts.hpp"
@@ -17,7 +18,7 @@ void test_orderbook_with_messages() {
     std::unordered_map<int, int> delta_changes;
     std::vector<std::string> messages = generateDeltaMessages(20000, 100, -1000, 1000, delta_changes);
 
-    RingBuffer ring(1024, 1024);
+    StringRingBuffer ring(1024, 1024);
 
     std::atomic<bool> all_written = false;
 
@@ -83,7 +84,7 @@ void test_orderbook_with_messages_from_file(const std::string& path) {
 
     std::ifstream file(path);
 
-    RingBuffer ring(1024, 1024);
+    StringRingBuffer ring(1024, 1024);
 
     std::atomic<bool> all_written = false;
 
@@ -113,6 +114,70 @@ void test_orderbook_with_messages_from_file(const std::string& path) {
             KalshiOrderbookDelta delta = parser.fillKalshiOrderbookDelta(doc);
             // apply the delta
             orderbook.applyDelta(delta);
+            read_timings.push_back(timestampNs());
+        }
+    };
+ 
+    std::thread producer_thread = std::thread(writeToRingBuffer);
+    std::thread consumer_thread = std::thread(consume);
+
+    producer_thread.join();
+    consumer_thread.join();
+
+    std::vector<uint32_t> snapshot = orderbook.getSnapshot();
+    // should add some orderbook validation here
+
+    // produce timing stuff:
+    LatencyStats write_to_read = calculate_latency_stats(write_timings, read_timings, 0);
+    LatencyStats seen_to_read = calculate_latency_stats(seen_timings, read_timings, 0);
+    LatencyStats write_to_seen = calculate_latency_stats(write_timings, seen_timings, 0);
+    std::cout << "Write to read: \n";
+    print_latency_stats(write_to_read);
+    std::cout <<"\n\n Seen to read: \n";
+    print_latency_stats(seen_to_read);
+    std::cout << "Write to seen: \n";
+    print_latency_stats(write_to_seen);
+}
+
+// object ring
+void test_or_orderbook_with_messages_from_file(const std::string& path) {
+    KalshiMessageParser parser(2);
+    Orderbook orderbook(100);
+
+    std::ifstream file(path);
+
+    ObjectRingBuffer ring(1024);
+
+    std::atomic<bool> all_written = false;
+
+    std::vector<uint64_t> write_timings;
+    auto writeToRingBuffer = [&ring, &file, &all_written, &write_timings, &parser](){
+        std::string line;
+        while (std::getline(file, line)){
+            // this while loop is crucial. Ensures that the message
+            // actually gets written
+            // parse line first
+            simdjson::dom::element doc = parser.parseResponse(line);
+            KalshiOrderbookDelta delta = parser.fillKalshiOrderbookDelta(doc);
+
+            while (!ring.TryWriteDeltaWithTiming(delta.price, delta.quantity_hundredths, delta.side, delta.ts_ms, write_timings)){
+                continue;
+            }
+        }
+        all_written.store(true, std::memory_order_release);
+    };
+    std::vector<uint64_t> seen_timings;
+    std::vector<uint64_t> read_timings; 
+    auto consume = [&ring, &all_written, &orderbook, &read_timings, &seen_timings](){
+        while (ring.TryRead() != nullptr || !all_written.load(std::memory_order_acquire)){
+            if (ring.TryRead() == nullptr){
+                continue;
+            }
+            seen_timings.push_back(timestampNs());
+            // apply the delta
+            orderbook.applyDelta((*ring.TryRead()).delta);
+            ring.FinishRead();
+            
             read_timings.push_back(timestampNs());
         }
     };

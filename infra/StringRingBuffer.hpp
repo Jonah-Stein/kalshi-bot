@@ -20,9 +20,9 @@
 #   endif
 #endif
 
-class RingBuffer{
+class StringRingBuffer{
 public:
-    RingBuffer(uint32_t slots, uint32_t initial_slot_capacity){
+    StringRingBuffer(uint32_t slots, uint32_t initial_slot_capacity){
         if (slots == 0 || (slots & (slots - 1)) != 0){
             throw std::invalid_argument("slot must be nonzero power of 2");
         }
@@ -65,7 +65,7 @@ private:
     std::vector<std::string> buffer_;
 };
 
-bool RingBuffer::TryWrite(std::string& msg) {
+bool StringRingBuffer::TryWrite(std::string& msg) {
     if (producer_.counts - consumer_.published_counts.load(std::memory_order_acquire) >= buffer_size_){
         return false;
     }
@@ -79,7 +79,7 @@ bool RingBuffer::TryWrite(std::string& msg) {
     return true;
 }
 
-bool RingBuffer::TryWriteWithTiming(std::string& msg, std::vector<uint64_t>& timings) {
+bool StringRingBuffer::TryWriteWithTiming(std::string& msg, std::vector<uint64_t>& timings) {
     if (producer_.counts - consumer_.published_counts.load(std::memory_order_acquire) >= buffer_size_){
         return false;
     }
@@ -93,7 +93,7 @@ bool RingBuffer::TryWriteWithTiming(std::string& msg, std::vector<uint64_t>& tim
     return true;
 }
 
-std::string* RingBuffer::TryRead(){
+std::string* StringRingBuffer::TryRead(){
     if (consumer_.counts == producer_.published_counts.load(std::memory_order_acquire)){
         return nullptr;
     }
@@ -101,7 +101,7 @@ std::string* RingBuffer::TryRead(){
     return &buffer_[consumer_.counts & (buffer_size_ - 1)];
 }
 
-void RingBuffer::FinishRead(){
+void StringRingBuffer::FinishRead(){
     consumer_.counts++;
     consumer_.published_counts.store(consumer_.counts, std::memory_order_release);
 }

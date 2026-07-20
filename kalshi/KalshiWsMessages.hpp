@@ -25,7 +25,9 @@ struct KalshiOrderbookSnapshot {
 
 struct KalshiOrderbookDelta {
     uint16_t price;
-    int quantity_hundredths;
+    uint32_t quantity_hundredths;
     KalshiSide side;
     uint64_t ts_ms;
 };
+
+enum class KalshiMessageType : uint8_t {Snapshot, Delta, Stop};

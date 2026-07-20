@@ -1,5 +1,5 @@
 #include "testscripts.hpp"
-#include "../infra/RingBuffer.hpp"
+#include "../infra/StringRingBuffer.hpp"
 #include <thread>
 #include <atomic>
 #include <iostream>
@@ -34,7 +34,7 @@ void runRingBufferTests(){
 bool testRingBuffer(uint32_t message_count, uint64_t& pcycle_counts, uint64_t& ccycle_counts){
     uint32_t buffer_size = 1024;
     uint32_t buffer_slot_size = 1024;
-    RingBuffer ring(buffer_size, buffer_slot_size);
+    StringRingBuffer ring(buffer_size, buffer_slot_size);
 
     std::unordered_map<std::string, int> produced;
     std::unordered_map<std::string, int> consumed;

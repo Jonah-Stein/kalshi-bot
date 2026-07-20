@@ -4,7 +4,7 @@
 #include "testscripts/testscripts.hpp"
 #include "kalshi/KalshiMessageParser.hpp"
 #include "orderbook/Orderbook.hpp"
-#include "infra/RingBuffer.hpp"
+#include "infra/StringRingBuffer.hpp"
 #include "helpers/helpers.hpp"
 #include <string>
 #include <fstream>
@@ -48,7 +48,7 @@ void runSystem(const std::string& market_ticker, int decimal_degrees, KalshiWsCl
     times_finished.reserve(1024);
 
 
-    RingBuffer ring(1024, 1024);
+    StringRingBuffer ring(1024, 1024);
     int num_received = 0;
     auto writeToRingBuffer = [&ring, &num_received](std::string& msg){
         while (!ring.TryWrite(msg)){
@@ -173,7 +173,7 @@ int main(){
     // "KXWCADVANCE-26JUL11NORENG-NOR"
     std::unordered_map<int, int> delta_changes;
     // generateDeltasFile(1000000, 100, -1000, 1000, delta_changes, "generated_deltas.jsonl");
-    test_orderbook_with_messages_from_file("generated_deltas.jsonl");
+    test_or_orderbook_with_messages_from_file("generated_deltas.jsonl");
     
     // testwebsocket(ws_client);
 

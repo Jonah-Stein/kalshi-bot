@@ -1,5 +1,5 @@
 #include "../kalshi/KalshiWsClient.hpp"
-#include "../infra/RingBuffer.hpp"
+#include "../infra/StringRingBuffer.hpp"
 
 
 #include <iostream>
@@ -9,7 +9,7 @@
 #include <atomic>
 
 void testwebsocket(KalshiWsClient& ws_client){
-    RingBuffer ring(1024, 1024);
+    StringRingBuffer ring(1024, 1024);
 
     auto printOutputs = [](const std::string& msg){
         std::cout<<msg<<"\n";

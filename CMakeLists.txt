@@ -27,6 +27,7 @@ add_executable(kalshi-bot
     testscripts/generatedeltas.cpp
     testscripts/testwebsocket.cpp
     testscripts/orderbookwithmessages.cpp
+    testscripts/raworderbookwithmessages.cpp
     testscripts/orderbookupdates.cpp
     orderbook/Orderbook.cpp
 )

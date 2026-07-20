@@ -151,9 +151,12 @@ void test_or_orderbook_with_messages_from_file(const std::string& path) {
     std::atomic<bool> all_written = false;
 
     std::vector<uint64_t> write_timings;
-    auto writeToRingBuffer = [&ring, &file, &all_written, &write_timings, &parser](){
+    std::vector<uint64_t> received_timings;
+    auto writeToRingBuffer = [&ring, &file, &all_written, &received_timings, &write_timings, &parser](){
         std::string line;
         while (std::getline(file, line)){
+            received_timings.push_back(timestampNs());
+
             // this while loop is crucial. Ensures that the message
             // actually gets written
             // parse line first
@@ -163,6 +166,9 @@ void test_or_orderbook_with_messages_from_file(const std::string& path) {
             while (!ring.TryWriteDeltaWithTiming(delta.price, delta.quantity_hundredths, delta.side, delta.ts_ms, write_timings)){
                 continue;
             }
+            // while (!ring.TryWriteDelta(delta.price, delta.quantity_hundredths, delta.side, delta.ts_ms)){
+            //     continue;
+            // }
         }
         all_written.store(true, std::memory_order_release);
     };
@@ -192,9 +198,12 @@ void test_or_orderbook_with_messages_from_file(const std::string& path) {
     // should add some orderbook validation here
 
     // produce timing stuff:
+    LatencyStats received_to_read = calculate_latency_stats(received_timings, read_timings, 0);
     LatencyStats write_to_read = calculate_latency_stats(write_timings, read_timings, 0);
     LatencyStats seen_to_read = calculate_latency_stats(seen_timings, read_timings, 0);
     LatencyStats write_to_seen = calculate_latency_stats(write_timings, seen_timings, 0);
+    std::cout << "Received to read: \n";
+    print_latency_stats(received_to_read);
     std::cout << "Write to read: \n";
     print_latency_stats(write_to_read);
     std::cout <<"\n\n Seen to read: \n";

@@ -173,8 +173,26 @@ int main(){
     // "KXWCADVANCE-26JUL11NORENG-NOR"
     std::unordered_map<int, int> delta_changes;
     // generateDeltasFile(1000000, 100, -1000, 1000, delta_changes, "generated_deltas.jsonl");
-    test_or_orderbook_with_messages_from_file("generated_deltas.jsonl");
+    // test_or_orderbook_with_messages_from_file("generated_deltas.jsonl");
+    uint64_t start = timestampNs();
+    raw_test_or_orderbook_with_messages_from_file("generated_deltas.jsonl");
+    uint64_t end = timestampNs();
+    std::cout << "Object ring took: " << end-start << " ns\n";
     
+    start = timestampNs();
+    raw_test_orderbook_with_messages_from_file("generated_deltas.jsonl");
+    end = timestampNs();
+    std::cout << "String ring took: " << end-start << " ns\n";
+
+    start = timestampNs();
+    raw_test_or_orderbook_with_messages_from_file("generated_deltas.jsonl");
+    end = timestampNs();
+    std::cout << "Object ring took: " << end-start << " ns\n";
+
+    start = timestampNs();
+    raw_test_orderbook_with_messages_from_file("generated_deltas.jsonl");
+    end = timestampNs();
+    std::cout << "String ring took: " << end-start << " ns\n";
     // testwebsocket(ws_client);
 
 

@@ -39,4 +39,7 @@ void test_orderbook_with_messages();
 void test_orderbook_with_messages_from_file(const std::string& path);
 void test_or_orderbook_with_messages_from_file(const std::string& path);
 
+void raw_test_orderbook_with_messages_from_file(const std::string& path);
+void raw_test_or_orderbook_with_messages_from_file(const std::string& path);
+
 void test_orderbook_updates();

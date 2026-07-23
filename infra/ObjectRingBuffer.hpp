@@ -43,6 +43,9 @@ public:
         }
     }
 
+    FORCE_INLINE OrderbookUpdate* GetWriteSlot();
+    FORCE_INLINE void FinishWrite();
+
     FORCE_INLINE bool TryWriteDelta(uint16_t price, uint32_t quantity_hundredths, KalshiSide side, uint64_t ts_ms);
     FORCE_INLINE bool TryWriteSnapshot(const std::vector<KalshiPriceLevel>& yes_levels, const std::vector<KalshiPriceLevel>& no_levels);
 
@@ -69,6 +72,17 @@ private:
     uint32_t buffer_size_;
     std::vector<OrderbookUpdate> buffer_;
 };
+
+OrderbookUpdate* ObjectRingBuffer::GetWriteSlot(){
+    if (producer_.counts - consumer_.published_counts.load(std::memory_order_acquire) >= buffer_size_){
+        return nullptr;
+    }
+    return &buffer_[producer_.counts & (buffer_size_ - 1)];
+}
+void ObjectRingBuffer::FinishWrite(){
+    producer_.counts++;
+    producer_.published_counts.store(producer_.counts, std::memory_order_release);
+}
 
 bool ObjectRingBuffer::TryWriteDelta(uint16_t price, uint32_t quantity_hundredths, KalshiSide side, uint64_t ts_ms){
     if (producer_.counts - consumer_.published_counts.load(std::memory_order_acquire) >= buffer_size_){

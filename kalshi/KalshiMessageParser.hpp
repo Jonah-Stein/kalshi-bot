@@ -15,6 +15,9 @@ public:
     KalshiOrderbookDelta fillKalshiOrderbookDelta(simdjson::dom::element& doc);
     KalshiOrderbookSnapshot fillKalshiOrderbookSnapshot(simdjson::dom::element& doc);
     KalshiOrderbookSnapshot fillKalshiOrderbookSnapshotFromRest(simdjson::dom::element& doc);
+
+    void fillKalshiOrderbookDelta(simdjson::dom::element& doc, KalshiOrderbookDelta& delta);
+    void fillKalshiOrderbookSnapshot(simdjson::dom::element& doc, KalshiOrderbookSnapshot& snapshot);
     // KalshiOrderbookDelta fillKalshiOrderbookDelta(simdjson::ondemand::object& msg);
     // KalshiOrderbookSnapshot fillKalshiOrderbookSnapshot(simdjson::ondemand::object& msg);
     // KalshiOrderbookSnapshot fillKalshiOrderbookSnapshotFromRest(simdjson::ondemand::object& msg);

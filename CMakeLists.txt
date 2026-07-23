@@ -20,6 +20,8 @@ add_executable(kalshi-bot
     helpers/timestamps.cpp
     helpers/latencystats.cpp
     helpers/rest.cpp
+    api/MetricsHttpServer.cpp
+    app/MarketRuntime.cpp
     kalshi/KalshiAuth.cpp
     kalshi/KalshiRestClient.cpp
     kalshi/KalshiWsClient.cpp

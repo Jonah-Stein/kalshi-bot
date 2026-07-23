@@ -5,6 +5,9 @@
 #include "kalshi/KalshiMessageParser.hpp"
 #include "orderbook/Orderbook.hpp"
 #include "infra/StringRingBuffer.hpp"
+#include "infra/DoubleBuffer.hpp"
+#include "api/types.hpp"
+#include "api/MetricsHttpServer.hpp"
 #include "helpers/helpers.hpp"
 #include <string>
 #include <fstream>
@@ -15,6 +18,7 @@
 #include <thread>
 #include <format>
 #include <chrono>
+#include <iostream>
 #include <simdjson.h>
 
 std::string readFile(const std::string& path){
@@ -149,6 +153,36 @@ void runSystem(const std::string& market_ticker, int decimal_degrees, KalshiWsCl
 
 
 int main(){
+    DoubleBuffer<OrderbookMetrics> metrics_buf;
+
+    std::uint16_t metrics_port = 8080;
+    if (const char* port_env = std::getenv("METRICS_HTTP_PORT")) {
+        metrics_port = static_cast<std::uint16_t>(std::stoi(port_env));
+    }
+
+    MetricsHttpServer metrics_server(metrics_buf, "0.0.0.0", metrics_port);
+    metrics_server.start();
+
+    // Sample publish so GET /metrics works before the trading pipeline is wired.
+    // TODO: call write_slot()/publish() from the orderbook consumer every N messages after applyDelta.
+    {
+        OrderbookMetrics& slot = metrics_buf.write_slot();
+        slot.messages_received = 42;
+        slot.bid_price = 45;
+        slot.bid_quantity = 100;
+        slot.ask_price = 46;
+        slot.ask_quantity = 80;
+        metrics_buf.publish();
+    }
+
+    if (std::getenv("METRICS_SMOKE")) {
+        std::cout << "METRICS_SMOKE set: serving metrics on port " << metrics_port
+                  << " (Ctrl+C to exit)\n";
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::hours(24));
+        }
+    }
+
     std::string base_url = readEnvVar("KALSHI_API_BASE_URL");
     std::string api_key = readEnvVar("KALSHI_API_KEY");
     std::string pem_path = readEnvVar("KALSHI_PEM_PATH");
@@ -194,9 +228,5 @@ int main(){
     end = timestampNs();
     std::cout << "String ring took: " << end-start << " ns\n";
     // testwebsocket(ws_client);
-
-
-
-    
 
 }

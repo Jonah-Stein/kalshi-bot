@@ -104,3 +104,25 @@ void raw_test_or_orderbook_with_messages_from_file(const std::string& path) {
     producer_thread.join();
     consumer_thread.join();
 }
+
+void raw_orderbook_with_messages_from_file_time_trials(const std::string& path){
+    uint64_t start = timestampNs();
+    raw_test_or_orderbook_with_messages_from_file(path);
+    uint64_t end = timestampNs();
+    std::cout << "Object ring took: " << end-start << " ns\n";
+    
+    start = timestampNs();
+    raw_test_orderbook_with_messages_from_file(path);
+    end = timestampNs();
+    std::cout << "String ring took: " << end-start << " ns\n";
+
+    start = timestampNs();
+    raw_test_or_orderbook_with_messages_from_file(path);
+    end = timestampNs();
+    std::cout << "Object ring took: " << end-start << " ns\n";
+
+    start = timestampNs();
+    raw_test_orderbook_with_messages_from_file(path);
+    end = timestampNs();
+    std::cout << "String ring took: " << end-start << " ns\n";
+}

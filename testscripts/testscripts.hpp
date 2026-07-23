@@ -41,5 +41,6 @@ void test_or_orderbook_with_messages_from_file(const std::string& path);
 
 void raw_test_orderbook_with_messages_from_file(const std::string& path);
 void raw_test_or_orderbook_with_messages_from_file(const std::string& path);
+void raw_orderbook_with_messages_from_file_time_trials(const std::string& path);
 
 void test_orderbook_updates();

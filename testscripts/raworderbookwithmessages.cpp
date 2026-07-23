@@ -44,6 +44,8 @@ void raw_test_orderbook_with_messages_from_file(const std::string& path) {
             KalshiOrderbookDelta delta = parser.fillKalshiOrderbookDelta(doc);
             // apply the delta
             orderbook.applyDelta(delta);
+            // simulating strategy time
+            rest_ns(800);
         }
     };
  
@@ -90,6 +92,9 @@ void raw_test_or_orderbook_with_messages_from_file(const std::string& path) {
             // apply the delta
             orderbook.applyDelta((*ring.TryRead()).delta);
             ring.FinishRead();
+            
+            // simulating strategy time
+            rest_ns(800);
         }
     };
  

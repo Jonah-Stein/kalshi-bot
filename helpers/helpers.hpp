@@ -30,3 +30,5 @@ LatencyStats calculate_latency_stats(
 );
 
 void print_latency_stats(const LatencyStats& stats);
+
+void rest_ns(uint64_t ns);
